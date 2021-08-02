@@ -1,0 +1,128 @@
+<!-- <html xmlns="http://www.w3.org/1999/xhtml"> -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>DataTables</title>
+    <link href="http://cdn.bootcss.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet" media="screen">
+    <link href="http://cdn.bootcss.com/datatables/1.10.11/css/dataTables.bootstrap.min.css" rel="stylesheet" media="screen">
+    <link href="http://cdn.bootcss.com/datatables/1.10.11/css/jquery.dataTables.min.css" rel="stylesheet" media="screen">
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js" integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script>
+</head>
+<body>
+<div class="row-fluid">
+    <table id="example" class="display table-striped table-bordered table-hover table-condensed" cellspacing="0" width="100%">
+        <thead>
+        <tr>
+            <th>Date</th>
+			<th>Time</th>
+            <th>usec</th>
+			<th>SourceIP</th>
+            <th>SourcePort</th>
+			<th>DestinationIP</th>
+            <th>DestinationPort</th>
+			<th>FQDN</th>
+        </tr>
+        </thead>
+    </table>
+</div>
+<script src="http://cdn.bootcss.com/datatables/1.10.11/js/jquery.js"></script>
+<script src="http://cdn.bootcss.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+<script src="http://cdn.bootcss.com/datatables/1.10.11/js/jquery.dataTables.min.js"></script>
+<script src="http://cdn.bootcss.com/datatables/1.10.11/js/dataTables.bootstrap.min.js"></script>
+<script type="text/javascript">
+    // window.alert("{{webselect}}");
+    $(function () {
+        //提示信息
+        var lang = {
+            "sProcessing": "處理中...",
+            "sLengthMenu": "每頁 _MENU_ 項",
+            "sZeroRecords": "沒有匹配结果",
+            "sInfo": "當前顯示第 _START_ 至 _END_ 項，共 _TOTAL_ 項。",
+            "sInfoEmpty": "當前顯示第 0 至 0 項，共 0 項",
+            "sInfoFiltered": "(由 _MAX_ 項结果過濾)",
+            "sInfoPostFix": "",
+            "sSearch": "搜索:",
+            "sUrl": "",
+            "sEmptyTable": "表中數據為空",
+            "sLoadingRecords": "載入中...",
+            "sInfoThousands": ",",
+            "oPaginate": {
+                "sFirst": "首頁",
+                "sPrevious": "上頁",
+                "sNext": "下頁",
+                "sLast": "末頁",
+                "sJump": "跳轉"
+            },
+            "oAria": {
+                "sSortAscending": ": 以升序排列此列",
+                "sSortDescending": ": 以降序排列此列"
+            }
+        };
+
+        //初始化表格
+        var table = $("#example").dataTable({
+            language:lang,  //提示信息
+            autoWidth: false,  //禁用自動調整列寬
+            stripeClasses: ["odd", "even"],  //為奇偶行加上樣式，兼容不支持CSS偽類的場合
+            processing: true,  //隱藏加載提示,自行處理
+            serverSide: true,  //啟用服務器端分頁
+            searching: false,  //禁用原生搜索
+            orderMulti: false,  //啟用多列排序
+            order: [],  //取消默認排序查詢,否則複選框一列會出現小箭頭
+            renderer: "bootstrap",  //渲染樣式：Bootstrap和jquery-ui
+            pagingType: "simple_numbers",  //分頁樣式：simple,simple_numbers,full,full_numbers
+            columnDefs: [{
+                "targets": 'nosort',  //列的樣式名
+                "orderable": false    //包含上樣式名‘nosort’的禁止排序
+            }],
+            ajax: function (data, callback, settings) {
+                //封裝請求参數
+                var param = {};
+                param.limit = data.length;//頁面顯示紀錄條數，在頁面顯示每頁顯示多少項的時候
+                param.start = data.start;//開始的紀錄序號
+                param.page = (data.start / data.length)+1;//當前頁碼
+                console.log(param);
+
+                //ajax請求數據
+                $.ajax({
+                    type: "GET",
+                    url: "http://524.248.93.227:5000/select/{{webselect}}/{{webselect1}}/{{webselect2}}/{{webselect3}}",
+                    cache: false,  //禁用緩存
+                    data: param,  //傳入組裝的参數
+                    dataType: "json",
+                    success: function (result) {
+                        console.log(result);
+                        // console.log(result.length);
+                        //setTimeout僅為測試延遲效果
+                        setTimeout(function () {
+                            //封裝返回數據
+                            var returnData = {};
+                            returnData.draw = data.draw;//這裡直接自行返回了draw計數器,應該由後台返回
+                            returnData.recordsTotal = result.length;//返回數據全部紀錄
+                            returnData.recordsFiltered = result.length;//後台不實現過濾功能，每次查詢均視作全部结果
+                            returnData.data = result;//返回的數據列表
+                            console.log(returnData);
+                            //調用DataTables提供的callback方法，代表數據已封装完成並傳回DataTables進行渲染
+                            //此時的數據需確保正確無誤，異常判斷應在執行此回調前自行處理完畢
+                            callback(returnData);
+                        }, 200);
+                    }
+                });
+            },
+            //列表表頭字段
+            columns: [
+                { "data": "Date" },
+                { "data": "Time" },
+                { "data": "usec" },
+                { "data": "SourceIP" },
+                { "data": "SourcePort" },
+                { "data": "DestinationIP" },
+                { "data": "DestinationPort" },
+                { "data": "FQDN" },
+            ]
+        }).api();
+        //此處需调用api()方法,否则返回的是JQuery對象而不是DataTables的API對象
+    });
+</script>
+</body>
+</html>

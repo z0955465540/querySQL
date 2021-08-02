@@ -1,0 +1,56 @@
+<html>
+<head>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+</head>
+<body>
+
+<table border=1>
+		<tr>
+			<td>Date</td>
+			<td>Time</td>
+            <td>usec</td>
+			<td>SourceIP</td>
+            <td>SourcePort</td>
+			<td>DestinationIP</td>
+            <td>DestinationPort</td>
+			<td>FQDN</td>
+		</tr>
+	<tbody id="row">
+		
+	</tbody>
+
+</table>
+</body>
+</html>
+
+<script>
+$(document).ready(function(){
+    $.ajax({
+        url: 'http://127.0.0.1:5000/index/%/2019-08-21_13:20:28/2019-08-21_13:20:28/100050.connect.garena.com',
+        type: "get",
+		dataType:"json",
+        
+        success: function (info) {
+                total_len = info.length;
+                console.log(info)
+			    for(i=0;i<total_len;i++){
+                    $("#row").append(
+							"<tr>"+
+							"<td>"+info[i].Date+"</td>"+
+							"<td>"+info[i].Time+"</td>"+
+                            "<td>"+info[i].usec+"</td>"+
+                            "<td>"+info[i].SourceIP+"</td>"+
+                            "<td>"+info[i].SourcePort+"</td>"+
+                            "<td>"+info[i].DestinationIP+"</td>"+
+                            "<td>"+info[i].DestinationPort+"</td>"+
+                            "<td>"+info[i].FQDN+"</td>"+
+							"</tr>"
+			)}
+			
+        },
+        error: function (data) {
+            console.log("請求失敗");
+        }
+    });
+});
+</script>
